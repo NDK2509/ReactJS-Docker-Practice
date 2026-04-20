@@ -1,25 +1,23 @@
-# Multi-build stages
-
-# Builder stage => build app into static files
-FROM node:20-alpine AS builder
-
+# Step 1: Build stage
+FROM node:20-alpine AS build
+# Set working directory
 WORKDIR /app
-
-# Copy file packe.json vao /app
-COPY package.json .
-# Install libs 
-RUN npm install --verbose
-# Copy tat ca cac file vao image ngoai tru nhung file co trong .dockerignore
+# Copy package.json and package-lock.json
+COPY package*.json ./
+# Install dependencies
+RUN npm install
+# Copy the rest of the application code
 COPY . .
-# Build app into static files =? /app/dist
+# Build the application
 RUN npm run build
 
-# Runner stage => serve static files
-FROM node:20-alpine AS runner
-WORKDIR /app
-COPY --from=builder /app/dist .
-# Serve static file (serve, nginx, apache, caddy, ...) (webserver)
-RUN npm i -g serve
-ENTRYPOINT ["serve", "-s", ".", "-l", "3000"]
-
-EXPOSE 3000
+# Step 2: Production stage
+FROM nginx:stable-alpine
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy the built files from the build stage to Nginx's html directory
+COPY --from=build /app/dist /usr/share/nginx/html
+# Expose port 80
+EXPOSE 80
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
