@@ -75,7 +75,7 @@ docker image ls
 
 4. Run inage to container
 ```
-docker run -d -p 8000:3000 --name docker-example docker-example:latest
+docker run -d -p 8000:80 --name docker-example docker-example:latest
 ```
 
 5. Check container
